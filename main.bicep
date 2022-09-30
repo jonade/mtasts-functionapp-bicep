@@ -4,8 +4,6 @@ param location string = resourceGroup().location
 param resourceNamePrefix string = 'FuncAppBicep'
 var envResourceNamePrefix = toLower(resourceNamePrefix)
 
-//param domainName string = 'contoso.com'
-
 
 resource StorageAccount 'Microsoft.Storage/storageAccounts@2022-05-01' = {
   name: '${envResourceNamePrefix}storage'
