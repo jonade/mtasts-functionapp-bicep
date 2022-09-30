@@ -59,7 +59,7 @@ resource FunctionApp 'Microsoft.Web/sites@2022-03-01' = {
         }
         {
           name: 'FUNCTIONS_EXTENSION_VERSION'
-          value: '~4'
+          value: '~3'
         }
       ]
     }
