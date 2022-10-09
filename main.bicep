@@ -79,7 +79,7 @@ resource HttpTrigger 'Microsoft.Web/sites/functions@2022-03-01' = {
     language: 'CSharp'
     isDisabled: false
     files: {
-      'run.csx': '#r "Newtonsoft.Json"\nusing System.Net;\nusing Microsoft.AspNetCore.Mvc;\nusing Microsoft.Extensions.Primitives;\nusing Newtonsoft.Json;\n\npublic static async Task<IActionResult> Run(HttpRequest req, ILogger log)\n{\n    log.LogInformation("C# HTTP trigger function processed a request.");\n\n    string responseMessage = "version STSv1\\nmode: testing\\nmx: ${mxRecord}\\nmax_age: 604800";\n\n    return new OkObjectResult(responseMessage);\n}'
+      'run.csx': '#r "Newtonsoft.Json"\nusing System.Net;\nusing Microsoft.AspNetCore.Mvc;\nusing Microsoft.Extensions.Primitives;\nusing Newtonsoft.Json;\n\npublic static async Task<IActionResult> Run(HttpRequest req, ILogger log)\n{\n    log.LogInformation("C# HTTP trigger function processed a request.");\n\n    string responseMessage = "version: STSv1\\nmode: testing\\nmx: ${mxRecord}\\nmax_age: 604800";\n\n    return new OkObjectResult(responseMessage);\n}'
     }
     config: {
       bindings: [
