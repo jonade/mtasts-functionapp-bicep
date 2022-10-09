@@ -1,7 +1,7 @@
 param location string = resourceGroup().location
 
 @description('Resource name prefix')
-param resourceNamePrefix string = 'FuncAppBicep'
+param resourceNamePrefix string = 'FuncAppMtaSts'
 var envResourceNamePrefix = toLower(resourceNamePrefix)
 
 @description('MX record to be used within MTA-STS policy')
@@ -63,6 +63,10 @@ resource FunctionApp 'Microsoft.Web/sites@2022-03-01' = {
         {
           name: 'FUNCTIONS_EXTENSION_VERSION'
           value: '~3'
+        }
+        {
+          name: 'AzureFunctionsJobHost__extensions__http__routePrefix'
+          value: ''
         }
       ]
     }
