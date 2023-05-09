@@ -21,3 +21,7 @@ New-AzResourceGroupDeployment -ResourceGroupName "MTASTSRG" -TemplateFile ./main
 # Or use a different MX record within the mta-sts.txt policy instead of the default *.mail.protection.outlook.com
 New-AzResourceGroupDeployment -ResourceGroupName "MTASTSRG" -TemplateFile ./main.bicep -mxRecord "mail.contoso.com"
 ```
+
+or
+
+[![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fjonade%2Fmtasts-functionapp-bicep%2Fmain%2Fazuredeploy.json)
