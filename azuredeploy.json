@@ -1,0 +1,142 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.17.1.54307",
+      "templateHash": "14676421541172558424"
+    }
+  },
+  "parameters": {
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]"
+    },
+    "resourceNamePrefix": {
+      "type": "string",
+      "defaultValue": "FuncAppMtaSts",
+      "metadata": {
+        "description": "Resource name prefix"
+      }
+    },
+    "mxRecord": {
+      "type": "string",
+      "defaultValue": "*.mail.protection.outlook.com",
+      "metadata": {
+        "description": "MX record to be used within MTA-STS policy"
+      }
+    }
+  },
+  "variables": {
+    "envResourceNamePrefix": "[toLower(parameters('resourceNamePrefix'))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2022-05-01",
+      "name": "[format('{0}storage', variables('envResourceNamePrefix'))]",
+      "location": "[parameters('location')]",
+      "kind": "StorageV2",
+      "sku": {
+        "name": "Standard_LRS"
+      },
+      "properties": {
+        "supportsHttpsTrafficOnly": true,
+        "minimumTlsVersion": "TLS1_2"
+      }
+    },
+    {
+      "type": "Microsoft.Web/serverfarms",
+      "apiVersion": "2022-03-01",
+      "name": "[format('{0}-asp', variables('envResourceNamePrefix'))]",
+      "location": "[parameters('location')]",
+      "kind": "Windows",
+      "sku": {
+        "name": "Y1",
+        "tier": "Dynamic"
+      },
+      "properties": {
+        "reserved": false
+      }
+    },
+    {
+      "type": "Microsoft.Web/sites",
+      "apiVersion": "2022-03-01",
+      "name": "[format('{0}-app', variables('envResourceNamePrefix'))]",
+      "location": "[parameters('location')]",
+      "kind": "functionapp",
+      "identity": {
+        "type": "SystemAssigned"
+      },
+      "properties": {
+        "httpsOnly": true,
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', format('{0}-asp', variables('envResourceNamePrefix')))]",
+        "reserved": false,
+        "siteConfig": {
+          "alwaysOn": false,
+          "numberOfWorkers": 1,
+          "http20Enabled": true,
+          "ftpsState": "Disabled",
+          "minTlsVersion": "1.2",
+          "appSettings": [
+            {
+              "name": "AzureWebJobsStorage",
+              "value": "[format('DefaultEndpointsProtocol=https;AccountName={0};AccountKey={1};EndpointSuffix=core.windows.net', format('{0}storage', variables('envResourceNamePrefix')), listKeys(resourceId('Microsoft.Storage/storageAccounts', format('{0}storage', variables('envResourceNamePrefix'))), '2022-05-01').keys[0].value)]"
+            },
+            {
+              "name": "FUNCTIONS_WORKER_RUNTIME",
+              "value": "dotnet"
+            },
+            {
+              "name": "FUNCTIONS_EXTENSION_VERSION",
+              "value": "~3"
+            },
+            {
+              "name": "AzureFunctionsJobHost__extensions__http__routePrefix",
+              "value": ""
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms', format('{0}-asp', variables('envResourceNamePrefix')))]",
+        "[resourceId('Microsoft.Storage/storageAccounts', format('{0}storage', variables('envResourceNamePrefix')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Web/sites/functions",
+      "apiVersion": "2022-03-01",
+      "name": "[format('{0}/HttpTrigger1', format('{0}-app', variables('envResourceNamePrefix')))]",
+      "properties": {
+        "language": "CSharp",
+        "isDisabled": false,
+        "files": {
+          "run.csx": "[format('#r \"Newtonsoft.Json\"\nusing System.Net;\nusing Microsoft.AspNetCore.Mvc;\nusing Microsoft.Extensions.Primitives;\nusing Newtonsoft.Json;\n\npublic static async Task<IActionResult> Run(HttpRequest req, ILogger log)\n{{\n    log.LogInformation(\"C# HTTP trigger function processed a request.\");\n\n    string responseMessage = \"version: STSv1\\nmode: testing\\nmx: {0}\\nmax_age: 604800\";\n\n    return new OkObjectResult(responseMessage);\n}}', parameters('mxRecord'))]"
+        },
+        "config": {
+          "bindings": [
+            {
+              "name": "req",
+              "route": ".well-known/mta-sts.txt",
+              "authLevel": "anonymous",
+              "methods": [
+                "get"
+              ],
+              "direction": "in",
+              "type": "httpTrigger"
+            },
+            {
+              "name": "$return",
+              "type": "http",
+              "direction": "out"
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/sites', format('{0}-app', variables('envResourceNamePrefix')))]"
+      ]
+    }
+  ]
+}
